@@ -1,0 +1,138 @@
+error:
+  website-username-not-exist: <red>Nijedan korisnik sajta ne postoji sa ovim 
+    korisničkim imenom.
+  discord-username-not-exist: <red>Nijedan korisnik sajta ne postoji sa ovim 
+    Discord korisničkim imenom.
+  minecraft-uuid-not-exist: <red>Trenutno ne postoji korisnik sajta sa ovim 
+    Minecraft UUID-om.
+  target-no-website-account: <red>Navedeni igrač nema nalog na sajtu.
+  website-connection: <red>Došlo je do greške prilikom pokušaja povezivanja sa 
+    sajtom.
+  username-not-online: <red>Navedeno korisničko ime nije važeće ili igrač nije 
+    na mreži.
+player:
+  self:
+    not-registered: <red>Morate registrovati svoj nalog da biste izvršili ovu 
+      radnju.
+    command-banned: <red>Ne možete pokrenuti ovu komandu, banovani ste sa sajta.
+boolean:
+  yes-positive: <green>Da</green>
+  yes-negative: <red>Da</red>
+  no-positive: <green>Ne</green>
+  no-negative: <red>Ne</red>
+command:
+  not-a-player: <red>Morate biti igrač da biste izvršili ovu komandu.
+  no-permission: <red>Nemate dozvolu da izvršite ovu komandu.
+  notifications:
+    usage: /<command>
+    description: Prikazivanje liste obaveštenja sa sajta
+    output:
+      no-notifications: Nemate nepročitana obaveštenja.
+      notification: <hover:show_text:"Kliknite da otvorite u web 
+        pretraživaču"><click:open_url:"<url>"><message></click></hover>
+  plugin:
+    usage: /<command> 'reload'/'rl'/'last_error'
+    description: Administrativne komande za NamelessMC plugin
+    output:
+      reload-successful: Plugin uspešno ponovo učitan.
+  register:
+    usage: /<command> \<email> [korisničko ime]
+    description: Kreiranje naloga na sajtu
+    output:
+      success:
+        email: Molimo proverite svoj inbox da biste završili registraciju.
+        link: Molimo završite registraciju odlaskom na 
+          <hover:show_text:"Kliknite da otvorite u web 
+          pretraživaču"><click:open_url:"<url>"><url></click></hover>.
+      fail:
+        username-used: <red>Navedeno korisničko ime već se koristi od strane 
+          drugog korisničkog naloga.
+        email-used: <red>Ova adresa e-pošte se već koristi za drugi korisnički 
+          nalog.
+        minecraft-used: <red>Vaš Minecraft nalog je već povezan sa drugim 
+          korisnikom sajta.
+        email-invalid: <red>Navedena adresa e-pošte je nevažeća.
+        username-invalid: <red>Navedeno korisničko ime je nevažeće.
+        cannot-send-email: <red>Nije moguće poslati email poruku za 
+          registraciju, molimo kontaktirajte admina da aktivira vaš nalog.
+        console-must-specify-username: <red>Prilikom pokretanja komande za 
+          registraciju sa konzole, morate navesti korisničko ime.
+        custom-username-disabled: <red>Registrovanje sa korisničkim imenom koje 
+          nije vaše Minecraft korisničko ime nije dozvoljeno.
+  report:
+    usage: /<command> \<name/uuid> \<reason>
+    description: Prijavi igrača
+    output:
+      success: Hvala vam na prijavi ovog igrača.
+      fail:
+        already-open: <red>Ne možete prijaviti ovog igrača, već imate otvorenu 
+          prijavu za njega.
+        report-self: <red>Ne možete prijaviti sebe.
+      notify-broadcast: Igrač <yellow><reporter_username></yellow> je otvorio 
+        prijavu za <yellow><reported_username></yellow>.
+  store-change-credits:
+    usage: /<command> \<ime igrača> \<(-)credits cents>
+    description: Dodavanje ili uklanjanje kredita iz prodavnice za korisnika
+    output:
+      added: Dodato <green><credits></green> kredita na nalog igrača <username>.
+      removed: Uklonjeno <red><credits></red> kredita sa naloga igrača 
+        <username>.
+      nothing: Nije potrebna nikakva radnja.
+  store-view-credits:
+    usage: /<command> [ime igrača]
+    description: Pregled kredita u prodavnici
+    output:
+      credits: Imate <credits> kredita.
+      console-must-provide-target: Dotični igrač mora biti naveden prilikom 
+        pokretanja ove komande sa konzole.
+      no-permission-other: Nemate dozvolu za pregled kredita ostalih igrača.
+  validate:
+    usage: /<command> \<code> [player name]
+    description: Validiranje naloga korisnika na sajtu koristeći dati kod.
+    output:
+      success: Vaš nalog je validiran.
+      fail:
+        invalid-code: <red>Navedeni kod za validaciju je netačan. Molimo 
+          proverite da li ste ga kopirali ispravno i pokušajte ponovo.
+        already-validated: <red>Vaš nalog je već validiran.
+        minecraft-account-linked: <red>Ovaj Minecraft nalog je već povezan sa 
+          nalogom na sajtu.
+        others-only-from-console: <red>Ovu komandu možete izvršiti na druge 
+          igrače samo preko konzole.
+  suggest:
+    usage: /<command> \<naslov predloga>
+    description: Kreiranje predloga
+    output:
+      success: Predlog je uspešno kreiran. Kliknite 
+        <yellow><click:open_url:"<url>">ovde</click></yellow> da ga otvorite u 
+        web pretraživaču.
+      too-short: Navedeni predlog je previše kratak, molimo koristite više reči 
+        da opišete vaš predlog.
+  user-info:
+    usage: /<command> [korisničko ime]
+    description: Prikaz informacija o korisniku sajta
+    output:
+      username: 'Korisničko ime: <username>'
+      displayname: 'Ime za prikaz: <displayname>'
+      uuid: 'UUID: <uuid>'
+      uuid-unknown: 'UUID: nepoznato'
+      primary-group: 'Primarna grupa: <groupname>'
+      all-groups: 'Sve grupe: <groups_names_list>'
+      registered-date: 'Datum registracije: <date>'
+      validated: 'Nalog validiran: <validated>'
+      banned: 'Ban zabrana: <banned>'
+      custom-field: "Prilagođeno polje '<name>': <value>"
+      store-module-credits: 'Krediti modula prodavnice: <credits>'
+      integrations:
+        header: 'Integracije:'
+        identifier: 'Identifikator: <identifier>'
+        username: 'Korisničko ime: <username>'
+        linked-date: 'Datum povezivanja: <linked_date>'
+        verified: 'Integracija naloga verifikovana: <is_verified>'
+join-not-registered: Još nemate nalog na našem sajtu. Molimo registrujte se 
+  koristeći /<register_command>.
+join-notifications: Imate obaveštenja sa sajta, molimo pokrenite 
+  /<notifications_command> za više informacija.
+website-announcement: 'Obaveštenje sajta: <message>'
+user-sync-kick: Zabranjen vam je pristup našem serveru zbog ban kazne na nalogu 
+  na sajtu.

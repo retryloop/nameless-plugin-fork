@@ -1,0 +1,144 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <artifactId>plugin-paper</artifactId>
+    <name>Nameless-Plugin-Paper</name>
+
+    <parent>
+        <relativePath>../pom.xml</relativePath>
+        <groupId>com.namelessmc</groupId>
+        <artifactId>plugin</artifactId>
+        <version>${revision}</version>
+    </parent>
+
+    <build>
+        <sourceDirectory>src/main</sourceDirectory>
+        <resources>
+            <resource>
+                <directory>resources</directory>
+                <filtering>true</filtering>
+            </resource>
+        </resources>
+
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.15.0</version>
+                <configuration>
+                    <source>17</source>
+                    <target>17</target>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <configuration>
+                    <relocations combine.children="append">
+                        <relocation>
+                            <pattern>org.spongepowered.configurate</pattern>
+                            <shadedPattern>com.namelessmc.plugin.lib.configurate</shadedPattern>
+                        </relocation>
+                        <relocation>
+                            <pattern>io.leangen.geantyref</pattern>
+                            <shadedPattern>com.namelessmc.plugin.lib.geantyref</shadedPattern>
+                        </relocation>
+						<relocation> <!-- pulled in by configurate -->
+							<pattern>net.kyori.option</pattern>
+							<shadedPattern>com.namelessmc.plugin.lib.option</shadedPattern>
+						</relocation>
+    					<relocation> <!-- pulled in by kyori.option -->
+							<pattern>org.jspecify.annotations</pattern>
+							<shadedPattern>com.namelessmc.plugin.lib.jspecify-annotations</shadedPattern>
+						</relocation>
+						<relocation>
+							<pattern>org.jetbrains.annotations</pattern>
+							<shadedPattern>com.namelessmc.plugin.lib.jetbrains-annotations</shadedPattern>
+						</relocation>
+                    </relocations>
+                </configuration>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+    <dependencies>
+
+        <dependency>
+            <groupId>com.namelessmc</groupId>
+            <artifactId>plugin-bukkit-base</artifactId>
+            <exclusions>
+                <!-- Paper API dependency replaces Bukkit -->
+                <exclusion>
+                    <groupId>org.bukkit</groupId>
+                    <artifactId>bukkit</artifactId>
+                </exclusion>
+                <!-- Paper ships with adventure-api, minimessage and the serializer we need -->
+                <exclusion>
+                    <groupId>net.kyori</groupId>
+                    <artifactId>adventure-api</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>net.kyori</groupId>
+                    <artifactId>adventure-text-minimessage</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>net.kyori</groupId>
+                    <artifactId>adventure-text-serializer-plain</artifactId>
+                </exclusion>
+                <!-- Paper has native adventure support, no need for the Bukkit compatibility layer -->
+                <exclusion>
+                    <groupId>net.kyori</groupId>
+                    <artifactId>adventure-platform-bukkit</artifactId>
+                </exclusion>
+                <!-- Paper 1.18.2 includes SnakeYAML 1.30 -->
+                <exclusion>
+                    <groupId>org.yaml</groupId>
+                    <artifactId>snakeyaml</artifactId>
+                </exclusion>
+                <!-- Paper 1.18.2 includes Gson 2.8.9 -->
+                <exclusion>
+                    <groupId>com.google.code.gson</groupId>
+                    <artifactId>gson</artifactId>
+                </exclusion>
+                <!-- Paper 1.18.2 includes Guava 31.0.1-jre -->
+                <exclusion>
+                    <groupId>com.google.guava</groupId>
+                    <artifactId>guava</artifactId>
+                </exclusion>
+                <!-- Paper 1.18.2 includes Checker Framework 3.21.0 and errorprone 2.0.18 -->
+                <exclusion>
+                    <groupId>org.checkerframework</groupId>
+                    <artifactId>checker-qual</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.google.errorprone</groupId>
+                    <artifactId>error_prone_annotations</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+            <version>2.13.2</version>
+        </dependency>
+
+        <dependency>
+            <groupId>io.papermc.paper</groupId>
+            <artifactId>paper-api</artifactId>
+            <scope>provided</scope>
+        </dependency>
+
+    </dependencies>
+
+</project>

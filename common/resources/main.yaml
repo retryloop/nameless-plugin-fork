@@ -1,0 +1,113 @@
+# Nameless Plugin configuration
+# Something not working? Please see our troubleshooting guide: https://docs.namelessmc.com/en/integrations/plugin-troubleshooting
+# Reload the plugin using /nlpl reload
+
+api:
+  # Enable the API and obtain the API URL and API key in StaffCP > Configuration > API
+  url: ""
+  key: ""
+  # Find your server id in StaffCP > Integrations > Minecraft > Minecraft Servers
+  server-id: 0
+  # Print detailed information about website requests and responses
+  debug: false
+  # Maximum time in milliseconds to wait for a response from the website. Sensible values are 3s-15s.
+  # Syntax: https://en.wikipedia.org/wiki/ISO_8601#Durations
+  timeout: 'PT10S'
+  # When enabled, the plugin will ignore server UUIDs and instead generate offline-mode UUIDs from player
+  # usernames to make API requests. The website must also be configured to use offline-mode UUIDs.
+  # This feature is experimental. It may help with bedrock (floodgate/geyser) compatibility.
+  offline-uuids: false
+
+# Data depends on platform: https://docs.namelessmc.com/en/integrations/plugin-data-sender
+# The server data sender sends data about this server to the website, periodically. It is essential for many
+# features to work like group sync, username sync and placeholders.
+# Note that currently the website doesn't use the plugin for server status and player list yet, even though
+# the plugin sends this information. You'll need to configure server pinging separately on the website.
+server-data-sender:
+  enabled: false
+  # Duration between sending data https://en.wikipedia.org/wiki/ISO_8601#Durations
+  interval: 'PT30S'
+  # Send PlaceholderAPI placeholders, to be used by NamelessMC (leaderboards, profile pages) or modules.
+  # This is only supported on the 'oldbukkit', 'spigot', and 'paper' platforms.
+  placeholders:
+    enabled: false
+    # global placeholders to send to the website (list of placeholder names without %%). Not currently used by the website.
+    global: []
+    # player-specific placeholders to send to the website (list of placeholder names without %%)
+    player: []
+
+# Group sync will, when enabled, send Minecraft groups to the website.
+#  > Select a group sync server: StaffCP > Integrations > Minecraft > Minecraft Servers
+#  > Configure groups: StaffCP > Configuration > API > Group sync.
+# This option is for NamelessMC v2.1.0+ only. In older versions, group sync is done by server-data-sender.
+group-sync:
+  enabled: false
+  # Duration between sending groups https://en.wikipedia.org/wiki/ISO_8601#Durations
+  interval: 'PT30S'
+
+logging:
+  # Show more information in log
+  verbose: false
+
+# Send a message to players who don't have a NamelessMC account when they join
+not-registered-join-message: false
+
+# Send website notifications in chat on join, if there are any
+join-notifications: false
+
+# For a list of valid languages, check file names in the 'languages' directory.
+# To help translate the plugin to your language, visit https://translate.namelessmc.com
+# If you want to customize messages for your server you can edit the language files.
+language: en_UK
+datetime-format: 'yyyy-MM-dd HH:mm:ss'
+
+# Periodically send website announcements in chat
+announcements:
+  enabled: false
+  # Every <interval> a random announcement is chosen (if there are any) and sent to the player
+  interval: 'PT10M'
+  # If specified, it will only show announcements with the respective display page.
+  # display: Forums
+
+# Allow players to specify a username, other than their Minecraft username, when using the register command.
+register-custom-username: true
+
+# ------------------ Options below only supported on Bukkit platforms ------------------ #
+
+# When a player is banned, also ban their website account if they have one.
+# This is event based, so it will not affect players that are already banned.
+sync-ban-to-website: false
+
+# User sync is only supported on the 'oldbukkit', 'spigot' and 'paper' platforms.
+user-sync:
+  enabled: false
+  # Number of seconds in between syncs
+  poll-interval: 'PT30S'
+  # List of UUIDs to exclude (never add to or remove from the whitelist or ban list)
+  # These UUIDs must be written with dashes. If you've enabled api-usernames, enter usernames instead.
+  exclude: []
+
+  # Auto whitelist registered players.
+  #
+  # When enabled, the plugin will automatically whitelist players that are registered on the website.
+  # Warning: Anyone who is not registered on the website will be removed from the whitelist, also
+  # if they were added before enabling this option!
+  whitelist:
+    enabled: false
+    # Only whitelist verified users
+    verified-only: false
+    # Enter a group id here to only whitelist users with that group
+    only-with-group: -1
+
+  # Ban players who are banned on the website, and pardon players who are not banned on the website.
+  bans:
+    enabled: false
+
+# Retrieving user info from NamelessMC and make it available as PlaceholderAPI placeholders.
+# NOT the same as sending placeholders to the website, which can be configured above!
+# https://github.com/PlaceholderAPI/PlaceholderAPI/wiki/Placeholders#nameless-plugin
+# This feature is only supported on the 'oldbukkit', 'spigot', and 'paper' platforms.
+retrieve-placeholders:
+  enabled: false
+  # Duration between retrieving placeholders https://en.wikipedia.org/wiki/ISO_8601#Durations
+  interval: 'PT30S'

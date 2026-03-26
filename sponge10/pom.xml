@@ -1,0 +1,92 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<artifactId>plugin-sponge10</artifactId>
+    <name>Nameless-Plugin-Sponge10</name>
+
+    <parent>
+        <groupId>com.namelessmc</groupId>
+        <artifactId>plugin</artifactId>
+		<version>${revision}</version>
+		<relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <build>
+        <sourceDirectory>src/main</sourceDirectory>
+
+		<resources>
+			<resource>
+				<directory>resources</directory>
+				<filtering>true</filtering>
+			</resource>
+		</resources>
+
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-shade-plugin</artifactId>
+				<configuration>
+					<relocations>
+						<relocation>
+							<pattern>com.github.mizosoft.methanol</pattern>
+							<shadedPattern>com.namelessmc.plugin.lib.methanol</shadedPattern>
+						</relocation>
+						<relocation>
+							<pattern>com.namelessmc.java_api</pattern>
+							<shadedPattern>com.namelessmc.plugin.lib.nameless-api</shadedPattern>
+						</relocation>
+						<relocation>
+							<pattern>net.kyori.event</pattern>
+							<shadedPattern>com.namelessmc.plugin.lib.event</shadedPattern>
+						</relocation>
+						<relocation>
+							<pattern>org.checkerframework</pattern>
+							<shadedPattern>com.namelessmc.plugin.lib.checker-framework</shadedPattern>
+						</relocation>
+					</relocations>
+				</configuration>
+				<executions>
+					<execution>
+						<phase>package</phase>
+						<goals>
+							<goal>shade</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+    </build>
+
+    <dependencies>
+
+		<dependency>
+			<groupId>com.namelessmc</groupId>
+			<artifactId>plugin-sponge9</artifactId>
+			<version>${revision}</version>
+			<exclusions>
+				<exclusion>
+					<groupId>org.spongepowered</groupId>
+					<artifactId>spongeapi</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+
+		<dependency>
+			<groupId>com.google.code.gson</groupId>
+			<artifactId>gson</artifactId>
+			<version>2.13.2</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.spongepowered</groupId>
+			<artifactId>spongeapi</artifactId>
+			<version>10.0.0</version>
+			<type>jar</type>
+			<scope>provided</scope>
+		</dependency>
+
+    </dependencies>
+
+</project>

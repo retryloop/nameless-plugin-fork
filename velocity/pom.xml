@@ -1,0 +1,137 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<artifactId>plugin-velocity</artifactId>
+    <name>Nameless-Plugin-Velocity</name>
+
+    <parent>
+		<relativePath>../pom.xml</relativePath>
+		<groupId>com.namelessmc</groupId>
+		<artifactId>plugin</artifactId>
+		<version>${revision}</version>
+    </parent>
+
+    <build>
+        <sourceDirectory>src/main</sourceDirectory>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-shade-plugin</artifactId>
+				<configuration>
+					<relocations combine.children="append">
+						<relocation>
+							<pattern>org.spongepowered.configurate</pattern>
+							<shadedPattern>com.namelessmc.plugin.lib.configurate</shadedPattern>
+						</relocation>
+						<relocation>
+							<pattern>io.leangen.geantyref</pattern>
+							<shadedPattern>com.namelessmc.plugin.lib.geantyref</shadedPattern>
+						</relocation>
+						<relocation> <!-- pulled in by configurate -->
+							<pattern>net.kyori.option</pattern>
+							<shadedPattern>com.namelessmc.plugin.lib.option</shadedPattern>
+						</relocation>
+						<relocation> <!-- pulled in by kyori.option -->
+							<pattern>org.jspecify.annotations</pattern>
+							<shadedPattern>com.namelessmc.plugin.lib.jspecify-annotations</shadedPattern>
+						</relocation>
+						<relocation>
+							<pattern>org.jetbrains.annotations</pattern>
+							<shadedPattern>com.namelessmc.plugin.lib.jetbrains-annotations</shadedPattern>
+						</relocation>
+					</relocations>
+				</configuration>
+				<executions>
+					<execution>
+						<phase>package</phase>
+						<goals>
+							<goal>shade</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<configuration>
+					<annotationProcessorPaths combine.children="append">
+						<path>
+							<groupId>com.velocitypowered</groupId>
+							<artifactId>velocity-api</artifactId>
+							<version>${velocityVersion}</version>
+						</path>
+					</annotationProcessorPaths>
+					<annotationProcessors combine.children="append">
+						<annotationProcessor>com.velocitypowered.api.plugin.ap.PluginAnnotationProcessor</annotationProcessor>
+					</annotationProcessors>
+				</configuration>
+			</plugin>
+		</plugins>
+    </build>
+
+    <dependencies>
+		<dependency>
+			<groupId>com.namelessmc</groupId>
+			<artifactId>plugin-common</artifactId>
+			<exclusions>
+				<!--
+				Velocity 3.1.1 includes Adventure 4.9.3 It also includes MiniMessage, but it's not part of the official
+				API. We use it anyway, including a newer MiniMessage version ourselves might create more issues than
+				it solves.
+				-->
+				<exclusion>
+					<groupId>net.kyori</groupId>
+					<artifactId>adventure-api</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>net.kyori</groupId>
+					<artifactId>adventure-text-minimessage</artifactId>
+				</exclusion>
+				<!--
+				Velocity 3.1.1 includes Configurate v3, but we'd like to use v4. However, we can still use the
+				same SnakeYAML and errorprone libraries as the old version.
+				-->
+				<exclusion>
+					<groupId>org.yaml</groupId>
+					<artifactId>snakeyaml</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>com.google.errorprone</groupId>
+					<artifactId>error_prone_annotations</artifactId>
+				</exclusion>
+				<!-- Velocity 3.1.1 includes Gson 25.1-jre -->
+				<exclusion>
+					<groupId>com.google.code.gson</groupId>
+					<artifactId>gson</artifactId>
+				</exclusion>
+				<!-- Velocity 3.1.1 includes Guava 25.1-jre -->
+				<exclusion>
+					<groupId>com.google.guava</groupId>
+					<artifactId>guava</artifactId>
+				</exclusion>
+				<!-- Velocity 3.1.1 includes checker-qual 3.6.1. We use 3.22.0, but it's probably fine. -->
+				<exclusion>
+					<groupId>org.checkerframework</groupId>
+					<artifactId>checker-qual</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		<dependency>
+			<groupId>com.google.code.gson</groupId>
+			<artifactId>gson</artifactId>
+			<version>2.13.2</version>
+		</dependency>
+		<dependency>
+			<groupId>com.velocitypowered</groupId>
+			<artifactId>velocity-api</artifactId>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.bstats</groupId>
+			<artifactId>bstats-velocity</artifactId>
+		</dependency>
+    </dependencies>
+
+</project>

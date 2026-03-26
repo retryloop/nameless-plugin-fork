@@ -1,0 +1,235 @@
+package com.namelessmc.plugin.common;
+
+import com.namelessmc.plugin.common.audiences.AbstractAudienceProvider;
+import com.namelessmc.plugin.common.command.AbstractScheduler;
+import com.namelessmc.plugin.common.event.NamelessEvent;
+import com.namelessmc.plugin.common.logger.AbstractLogger;
+import net.kyori.event.EventBus;
+import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
+
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Function;
+
+public class NamelessPlugin {
+
+	private static NamelessPlugin instance; // Not meant to be used by the nameless plugin itself
+
+	private final AbstractScheduler scheduler;
+	private final ConfigurationHandler configuration;
+	private final AbstractLogger logger;
+	private final ApiProvider api;
+	private final LanguageHandler language;
+	private final DateFormatter dateFormatter;
+	private final UserCache userCache;
+	private final EventBus<NamelessEvent> eventBus;
+	private final GroupSync groupSync;
+
+	private final List<List<Reloadable>> reloadables = List.of(
+			new ArrayList<>(),
+			new ArrayList<>(),
+			new ArrayList<>()
+	);
+	private final List<AbstractPermissions> permissionAdapters = new ArrayList<>();
+	private @Nullable AbstractPermissions chosenPermissionAdapter;
+	private volatile boolean unloading;
+
+	private AbstractAudienceProvider audienceProvider;
+
+	public NamelessPlugin(final Path dataDirectory,
+						  final AbstractScheduler scheduler,
+						  final Function<ConfigurationHandler, AbstractLogger> loggerInstantiator,
+						  final @Nullable Path logPath,
+						  final String platformInternalName,
+						  final String platformVersion) {
+		instance = this;
+
+		this.scheduler = scheduler;
+
+		this.configuration = this.registerReloadable(
+				new ConfigurationHandler(dataDirectory)
+		);
+		this.logger = this.registerReloadable(
+				loggerInstantiator.apply(this.configuration)
+		);
+		this.registerReloadable(new ConfigurationHandler.PostLoadChecker(this.configuration, this.logger),
+				Reloadable.Order.LAST);
+
+		this.api = this.registerReloadable(
+				new ApiProvider(scheduler, this.logger, this.configuration)
+		);
+		this.language = this.registerReloadable(
+				new LanguageHandler(dataDirectory, this.configuration, this.logger)
+		);
+		this.dateFormatter = this.registerReloadable(
+				new DateFormatter(this.configuration));
+		this.userCache = this.registerReloadable(
+				new UserCache(this));
+
+		this.eventBus = EventBus.create(NamelessEvent.class);
+
+		this.registerReloadable(new AnnouncementTask(this));
+		this.registerReloadable(new JoinNotificationsMessage(this));
+		this.registerReloadable(new JoinNotRegisteredMessage(this));
+		this.registerReloadable(new Metrics(this, platformInternalName, platformVersion));
+		this.registerReloadable(new Store(this));
+		this.registerReloadable(new SyncBanToWebsite(this));
+		this.registerReloadable(new Websend(this, logPath));
+		this.groupSync = this.registerReloadable(new GroupSync(this));
+
+		this.registerPermissionAdapter(new LuckPermsPermissions(this));
+
+		// Permission adapter is used by other reloadables, so must be loaded first.
+		this.registerReloadable(new PermissionAdapterSelector(), Reloadable.Order.FIRST);
+
+		int javaVer = Runtime.version().feature();
+		if (javaVer > 11 && javaVer < 17) {
+			this.logger.warning("You are running Java version " + javaVer + " which is non-LTS and no longer receives bug fixes or security fixes. Please update to Java 17.");
+		}
+	}
+
+	public ConfigurationHandler config() {
+		return this.configuration;
+	}
+
+	public AbstractLogger logger() {
+		return this.logger;
+	}
+
+	public ApiProvider apiProvider() {
+		return this.api;
+	}
+
+	public LanguageHandler language() {
+		return this.language;
+	}
+
+	public DateFormatter dateFormatter() {
+		return this.dateFormatter;
+	}
+
+	public AbstractScheduler scheduler() {
+		return this.scheduler;
+	}
+
+	public AbstractAudienceProvider audiences() {
+		return this.audienceProvider;
+	}
+
+	public UserCache userCache() {
+		return this.userCache;
+	}
+
+	public EventBus<NamelessEvent> events() {
+		return this.eventBus;
+	}
+
+	public GroupSync groupSync() {
+		return this.groupSync;
+	}
+
+	public @Nullable AbstractPermissions permissions() {
+		return this.chosenPermissionAdapter;
+	}
+
+	public boolean isUnloading() {
+		return this.unloading;
+	}
+
+	public void setAudienceProvider(final @NonNull AbstractAudienceProvider audienceProvider) {
+		this.audienceProvider = audienceProvider;
+	}
+
+	public void unload() {
+		this.unloading = true;
+		for (Reloadable.Order order : Reloadable.Order.values()) {
+			for (Reloadable reloadable : reloadables.get(order.ordinal())) {
+				this.logger.fine(() -> "Unloading " + order + ": " + reloadable.getClass().getSimpleName());
+				reloadable.unload();
+			}
+		}
+	}
+
+	public void load() {
+		this.unloading = false;
+		for (Reloadable.Order order : Reloadable.Order.values()) {
+			for (Reloadable reloadable : reloadables.get(order.ordinal())) {
+				this.logger.fine(() -> "Loading " + order + ": " + reloadable.getClass().getSimpleName());
+				reloadable.load();
+			}
+		}
+	}
+
+	public <T extends Reloadable> T registerReloadable(T reloadable) {
+		return this.registerReloadable(reloadable, Reloadable.Order.NORMAL);
+	}
+
+	public <T extends Reloadable> T registerReloadable(T reloadable, Reloadable.Order order) {
+		this.reloadables.get(order.ordinal()).add(reloadable);
+		return reloadable;
+	}
+
+	public void unregisterReloadable(Class<?> clazz) {
+		for (Reloadable.Order order : Reloadable.Order.values()) {
+			reloadables.get(order.ordinal()).removeIf(reloadable -> reloadable.getClass().equals(clazz));
+		}
+	}
+
+	public <T extends AbstractPermissions> T registerPermissionAdapter(T adapter) {
+		this.logger.fine(() -> "Registered permission adapter: " + adapter.getClass().getSimpleName());
+		this.permissionAdapters.add(adapter);
+		return adapter;
+	}
+
+	private class PermissionAdapterSelector implements Reloadable {
+
+		@Override
+		public void unload() {
+			NamelessPlugin.this.chosenPermissionAdapter = null;
+
+			for (AbstractPermissions permissions : NamelessPlugin.this.permissionAdapters) {
+				permissions.unload();
+			}
+		}
+
+		@Override
+		public void load() {
+			AbstractPermissions chosenPermissions = null;
+			int chosenPriority = Integer.MIN_VALUE;
+
+			for (AbstractPermissions permissions : NamelessPlugin.this.permissionAdapters) {
+				// Permission adapters implement Reloadable but are not reloaded by the plugin's main reload system.
+				// We need to reload it manually here.
+				NamelessPlugin.this.logger.fine(() -> "Reloading permissions: " + permissions.getClass().getSimpleName());
+				permissions.load();
+				if (permissions.isUsable()) {
+					final int priority = permissions.priority();
+					NamelessPlugin.this.logger.fine(() -> "Usable permission adapter: " + permissions.getClass().getSimpleName() + " (priority " + priority + ")");
+					if (chosenPermissions == null || priority > chosenPriority) {
+						chosenPermissions = permissions;
+						chosenPriority = priority;
+					}
+				}
+			}
+
+			NamelessPlugin.this.chosenPermissionAdapter = chosenPermissions;
+
+			if (chosenPermissions == null) {
+				NamelessPlugin.this.logger.fine("Found no usable permission adapter");
+			} else {
+				NamelessPlugin.this.logger.fine("Chosen permission adapter: " + chosenPermissions.getClass().getSimpleName());
+			}
+		}
+	}
+
+	/**
+	 * Get the most recently created instance (usually the only instance) of the Nameless-Plugin. To be used by
+	 * external plugins that want to use the Nameless API without duplicating API configuration.
+	 */
+	public static NamelessPlugin instance() {
+		return instance;
+	}
+
+}
