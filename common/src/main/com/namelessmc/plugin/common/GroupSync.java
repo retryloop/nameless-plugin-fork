@@ -140,6 +140,7 @@ public class GroupSync implements Reloadable {
         this.playerGroups.keySet().removeIf(uuid -> !knownPlayers.contains(uuid));
 
         final Map<UUID, Set<String>> groupsToSend = Collections.synchronizedMap(new HashMap<>());
+        final Map<UUID, Set<String>> fullResyncGroups = Collections.synchronizedMap(new HashMap<>());
         final Map<UUID, GroupDelta> groupDiffs = Collections.synchronizedMap(new HashMap<>());
         final Map<UUID, Set<String>> latestGroups = Collections.synchronizedMap(new HashMap<>());
         final CompletableFuture<?>[] futures = linkedMinecraftUuids.stream()
@@ -155,7 +156,7 @@ public class GroupSync implements Reloadable {
                                 this.plugin.logger().fine(() -> "Groups not previously known, or manually re-queued for player UUID: " + uuid);
                                 latestGroups.put(uuid, newGroups);
                                 groupsToSend.put(uuid, newGroups);
-                                groupDiffs.put(uuid, new GroupDelta(newGroups, Collections.emptySet()));
+                                fullResyncGroups.put(uuid, newGroups);
                             } else if (!newGroups.equals(previousGroups)) {
                                 this.plugin.logger().fine(() -> "Groups have changed for player UUID: " + uuid);
                                 latestGroups.put(uuid, newGroups);
@@ -198,7 +199,12 @@ public class GroupSync implements Reloadable {
                         api.sendMinecraftGroups(this.serverId, groupsToSend);
                     } else {
                         try {
-                            this.sendGroupDiffs(api, groupDiffs);
+                            if (!fullResyncGroups.isEmpty()) {
+                                api.sendMinecraftGroups(this.serverId, fullResyncGroups);
+                            }
+                            if (!groupDiffs.isEmpty()) {
+                                this.sendGroupDiffs(api, groupDiffs);
+                            }
                         } catch (final ApiException e) {
                             if (this.shouldFallbackToLegacyGroupSync(e)) {
                                 this.legacyGroupSyncRequired.set(true);
@@ -297,6 +303,7 @@ public class GroupSync implements Reloadable {
     }
 
     public void requestSync(UUID uuid) {
+        this.resetGroups(uuid);
         this.requestSync();
     }
 
