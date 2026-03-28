@@ -200,7 +200,7 @@ public class GroupSync implements Reloadable {
                     } else {
                         try {
                             if (!fullResyncGroups.isEmpty()) {
-                                api.sendMinecraftGroups(this.serverId, fullResyncGroups);
+                                this.sendFullGroupSyncs(api, fullResyncGroups);
                             }
                             if (!groupDiffs.isEmpty()) {
                                 this.sendGroupDiffs(api, groupDiffs);
@@ -255,6 +255,19 @@ public class GroupSync implements Reloadable {
         }
     }
 
+    private void sendFullGroupSyncs(final NamelessAPI api, final Map<UUID, Set<String>> fullGroupSyncs) throws NamelessException {
+        for (final Map.Entry<UUID, Set<String>> entry : fullGroupSyncs.entrySet()) {
+            final JsonObject payload = new JsonObject();
+            payload.addProperty("server_id", this.serverId);
+            payload.add("groups", this.toJsonArray(entry.getValue()));
+
+            api.requests().post(
+                    "minecraft/" + api.userByMinecraftUuidLazy(entry.getKey()).userTransformer() + "/sync-groups",
+                    payload
+            );
+        }
+    }
+
     private JsonArray toJsonArray(final Set<String> groups) {
         final JsonArray result = new JsonArray();
         for (final String group : groups) {
@@ -270,7 +283,8 @@ public class GroupSync implements Reloadable {
         }
 
         return e.apiError() == ApiError.NAMELESS_INVALID_POST_CONTENTS
-                && e.getMessage().contains("\"field\":\"server_id\"");
+                && (e.getMessage().contains("\"field\":\"server_id\"")
+                || e.getMessage().contains("\"field\":\"groups\""));
     }
 
     private void finishSyncRun() {
