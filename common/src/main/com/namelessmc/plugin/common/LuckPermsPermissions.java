@@ -9,6 +9,7 @@ import net.luckperms.api.model.group.Group;
 import net.luckperms.api.model.user.User;
 import net.luckperms.api.node.NodeType;
 import net.luckperms.api.node.types.InheritanceNode;
+import net.luckperms.api.query.QueryOptions;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.time.Duration;
@@ -82,11 +83,7 @@ public class LuckPermsPermissions extends AbstractPermissions {
 		if (user == null) {
 			return null;
 		}
-		return user.getNodes().stream()
-				.filter(NodeType.INHERITANCE::matches)
-				.map(NodeType.INHERITANCE::cast)
-				.map(InheritanceNode::getGroupName)
-				.collect(Collectors.toSet());
+		return this.collectActiveGroupNames(user);
 	}
 
 	@Override
@@ -96,11 +93,7 @@ public class LuckPermsPermissions extends AbstractPermissions {
 		}
 		this.ignoredRecalculateUsers.add(uuid);
 		return this.api.getUserManager().loadUser(uuid)
-				.thenApply(user -> user.getNodes().stream()
-						.filter(NodeType.INHERITANCE::matches)
-						.map(NodeType.INHERITANCE::cast)
-						.map(InheritanceNode::getGroupName)
-						.collect(Collectors.toSet()))
+				.thenApply(this::collectActiveGroupNames)
 				.whenComplete((ignored, throwable) -> {
 					if (this.plugin.isUnloading()) {
 						this.ignoredRecalculateUsers.remove(uuid);
@@ -112,5 +105,17 @@ public class LuckPermsPermissions extends AbstractPermissions {
 							Duration.ofSeconds(2)
 					);
 				});
+	}
+
+	private Set<String> collectActiveGroupNames(final User user) {
+		user.auditTemporaryNodes();
+		final QueryOptions queryOptions = user.getQueryOptions();
+
+		return user.getNodes(NodeType.INHERITANCE).stream()
+				.filter(InheritanceNode::getValue)
+				.filter(node -> !node.hasExpired())
+				.filter(node -> queryOptions.satisfies(node.getContexts()))
+				.map(InheritanceNode::getGroupName)
+				.collect(Collectors.toSet());
 	}
 }
