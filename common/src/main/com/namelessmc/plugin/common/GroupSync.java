@@ -1,5 +1,7 @@
 package com.namelessmc.plugin.common;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 import com.namelessmc.java_api.NamelessAPI;
 import com.namelessmc.java_api.exception.ApiError;
 import com.namelessmc.java_api.exception.ApiException;
@@ -235,11 +237,25 @@ public class GroupSync implements Reloadable {
     private void sendGroupDiffs(final NamelessAPI api, final Map<UUID, GroupDelta> groupDiffs) throws NamelessException {
         for (final Map.Entry<UUID, GroupDelta> entry : groupDiffs.entrySet()) {
             final GroupDelta diff = entry.getValue();
-            api.userByMinecraftUuidLazy(entry.getKey()).updateMinecraftGroups(
-                    diff.addedGroups().toArray(String[]::new),
-                    diff.removedGroups().toArray(String[]::new)
+            final JsonObject payload = new JsonObject();
+            payload.addProperty("server_id", this.serverId);
+            payload.add("add", this.toJsonArray(diff.addedGroups()));
+            payload.add("remove", this.toJsonArray(diff.removedGroups()));
+
+            api.requests().post(
+                    "minecraft/" + api.userByMinecraftUuidLazy(entry.getKey()).userTransformer() + "/sync-groups",
+                    payload
             );
         }
+    }
+
+    private JsonArray toJsonArray(final Set<String> groups) {
+        final JsonArray result = new JsonArray();
+        for (final String group : groups) {
+            result.add(group);
+        }
+
+        return result;
     }
 
     private boolean shouldFallbackToLegacyGroupSync(final ApiException e) {

@@ -1,7 +1,9 @@
 package com.namelessmc.plugin.common;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.namelessmc.java_api.NamelessAPI;
-import com.namelessmc.java_api.NamelessUser;
 import com.namelessmc.java_api.exception.NamelessException;
 import com.namelessmc.plugin.common.command.AbstractScheduledTask;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -23,6 +25,8 @@ public class UserCache implements Reloadable {
 	private List<String> usernames = Collections.emptyList();
 	private List<String> minecraftUsernames = Collections.emptyList();
 	private List<UUID> minecraftUuids = Collections.emptyList();
+
+	private static final String MINECRAFT_INTEGRATION = "Minecraft";
 
 	UserCache(final NamelessPlugin plugin) {
 		this.plugin = plugin;
@@ -56,26 +60,50 @@ public class UserCache implements Reloadable {
 			}
 
 			try {
-				final List<NamelessUser> users = api.users().makeRequest();
+				final JsonArray users = api.requests()
+						.get("users", "groups", null, "limit", 0)
+						.getAsJsonArray("users");
 
 				final List<String> usernames = new ArrayList<>(users.size());
 				final List<String> minecraftUsernames = new ArrayList<>(users.size());
 				final List<UUID> minecraftUuids = new ArrayList<>(users.size());
 
-				for (NamelessUser user : users) {
-					usernames.add(user.username());
-					if (user.minecraftUsername() != null) {
-						minecraftUsernames.add(user.minecraftUsername());
+				for (final JsonElement element : users) {
+					if (!element.isJsonObject()) {
+						continue;
 					}
-					final UUID minecraftUuid = user.minecraftUuid();
-					if (minecraftUuid != null) {
-						minecraftUuids.add(minecraftUuid);
+
+					final JsonObject user = element.getAsJsonObject();
+					final String username = this.getString(user, "username");
+					if (username != null) {
+						usernames.add(username);
+					}
+
+					final JsonObject minecraftIntegration = this.findVerifiedMinecraftIntegration(user);
+					if (minecraftIntegration == null) {
+						continue;
+					}
+
+					final String minecraftUsername = this.getString(minecraftIntegration, "username");
+					if (minecraftUsername != null) {
+						minecraftUsernames.add(minecraftUsername);
+					}
+
+					final String minecraftIdentifier = this.getString(minecraftIntegration, "identifier");
+					if (minecraftIdentifier == null) {
+						continue;
+					}
+
+					try {
+						minecraftUuids.add(NamelessAPI.websiteUuidToJavaUuid(minecraftIdentifier));
+					} catch (final IllegalArgumentException e) {
+						this.plugin.logger().warning("Skipping invalid Minecraft UUID from user cache refresh: " + minecraftIdentifier);
 					}
 				}
 
-				this.usernames = usernames;
-				this.minecraftUsernames = minecraftUsernames;
-				this.minecraftUuids = minecraftUuids;
+				this.usernames = Collections.unmodifiableList(usernames);
+				this.minecraftUsernames = Collections.unmodifiableList(minecraftUsernames);
+				this.minecraftUuids = Collections.unmodifiableList(minecraftUuids);
 				future.complete(null);
 			} catch (NamelessException e) {
 				this.plugin.logger().logException(e);
@@ -110,6 +138,39 @@ public class UserCache implements Reloadable {
 
 	public List<String> minecraftUsernamesSearch(@Nullable String part) {
 		return this.search(this.minecraftUsernames, part);
+	}
+
+	private @Nullable JsonObject findVerifiedMinecraftIntegration(final JsonObject user) {
+		if (!user.has("integrations") || !user.get("integrations").isJsonArray()) {
+			return null;
+		}
+
+		for (final JsonElement element : user.getAsJsonArray("integrations")) {
+			if (!element.isJsonObject()) {
+				continue;
+			}
+
+			final JsonObject integration = element.getAsJsonObject();
+			if (!MINECRAFT_INTEGRATION.equals(this.getString(integration, "integration"))) {
+				continue;
+			}
+
+			if (!integration.has("verified") || !integration.get("verified").getAsBoolean()) {
+				return null;
+			}
+
+			return integration;
+		}
+
+		return null;
+	}
+
+	private @Nullable String getString(final JsonObject object, final String property) {
+		if (!object.has(property) || object.get(property).isJsonNull()) {
+			return null;
+		}
+
+		return object.get(property).getAsString();
 	}
 
 }
