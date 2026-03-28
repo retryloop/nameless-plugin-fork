@@ -55,3 +55,11 @@ Building the entire project can take quite a long time. You might want to build 
 ```sh
 mvn package -pl velocity -am
 ```
+
+## Maintainer Notes
+
+- This fork is expected to drive group sync from Minecraft/LuckPerms toward the website.
+- The Velocity/common sync flow is centered in `common/src/main/com/namelessmc/plugin/common/GroupSync.java`.
+- Full requeue or first-seen syncs should use the modern `minecraft/{user}/sync-groups` endpoint with a full `groups` snapshot.
+- LuckPerms group collection is filtered to active, non-expired, context-valid inheritance nodes in `common/src/main/com/namelessmc/plugin/common/LuckPermsPermissions.java`.
+- When debugging mismatched website groups, capture the exact POST body sent to `sync-groups` before changing website logic.
